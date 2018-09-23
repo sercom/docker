@@ -1,0 +1,46 @@
+version: '3'
+services:
+  mysql-sercom:
+    image: mysql:5.5
+    container_name: mysql-sercom
+    environment:
+     - MYSQL_ROOT_PASSWORD=123456789
+    #Enable for debug mode
+    #ports:
+    #- 23306:3306
+    volumes:
+     - ./data/databases/mysql-sercom:/var/lib/mysql
+     - ./data/databases/logs/mysql-sercom:/var/log/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+  sercom:
+    build:
+      dockerfile: Dockerfile
+      context: ./sercom.docker
+    container_name: sercom
+    privileged: true
+    ports:
+     - 9000:8080
+    depends_on:
+     - "mysql-sercom"
+    command: ["/run.sh"]
+    volumes:
+     #Enable for debug mode
+     #- /home/usr/workspace/sercom_git/sercom:/home/sercom/sercom_src/sercom/sercom
+     #- /home/usr/workspace/sercom_git/doc:/home/sercom/sercom_src/sercom/doc
+     - ./data/sercom/chroot/template:/home/sercom/sercom_src/sercom/var/chroot_template
+     - ./data/sercom/chroot/sandbox:/home/sercom/sercom_src/sercom/var/chroot_sandbox
+     - ./data/sercom/tmp:/home/sercom/sercom_src/sercom/var/tmp
+     - ./data/sercom/log/sercom:/var/log/sercom
+     - ./data/sercom/log/supervisord:/var/log/supervisord
+    environment:
+     - SERCOM_DB_NAME=sercom
+     - SERCOM_DB_USER=sercom
+     - SERCOM_DB_PASS=12345678
+     - MYSQL_ADMIN_USER=root
+     - MYSQL_ADMIN_PASS=123456789
+     - MYSQL_SERVER=mysql-sercom
+     - MYSQL_PORT=3306
+
